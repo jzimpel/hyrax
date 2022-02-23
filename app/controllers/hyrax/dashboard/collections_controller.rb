@@ -144,10 +144,7 @@ module Hyrax
       end
 
       def update
-        unless params[:update_collection].nil?
-          process_banner_input
-          process_logo_input
-        end
+        process_branding
 
         process_member_changes
 
@@ -161,6 +158,12 @@ module Hyrax
         else
           after_update_error
         end
+      end
+
+      def process_branding
+        return if Hyrax.config.collection_model == "Hyrax::PcdmCollection"
+        process_banner_input
+        process_logo_input
       end
 
       def after_destroy(_id)
@@ -234,8 +237,16 @@ module Hyrax
       def valkyrie_update
         form.validate(collection_params) &&
           @collection = transactions['change_set.update_collection']
+                        .with_step_args(
+                          'collection_resource.save_collection_banner' => { update_banner_file_ids: params["banner_files"],
+                                                                            banner_unchanged_indicator: params["banner_unchanged"] },
+                          'collection_resource.save_collection_logo' => { update_logo_file_ids: params["logo_files"],
+                                                                          alttext_values: params["alttext"],
+                                                                          linkurl_values: params["linkurl"] }
+                        )
                         .call(form)
                         .value_or { return after_update_error }
+
         after_update
       end
 
@@ -499,7 +510,9 @@ module Hyrax
         @form ||=
           case @collection
           when Valkyrie::Resource
-            Hyrax::Forms::ResourceForm.for(@collection)
+            form = Hyrax::Forms::ResourceForm.for(@collection)
+            form.prepopulate!
+            form
           else
             form_class.new(@collection, current_ability, repository)
           end
