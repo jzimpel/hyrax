@@ -21,7 +21,7 @@ module Hyrax
         def call(collection_resource, update_banner_file_ids: nil, banner_unchanged_indicator: true)
           return Success(collection_resource) if ActiveModel::Type::Boolean.new.cast(banner_unchanged_indicator)
           collection_id = collection_resource.id.to_s
-          process_banner_input(collection_id: collection_id, banner_unchanged_indicator: banner_unchanged_indicator, update_banner_file_ids: update_banner_file_ids)
+          process_banner_input(collection_id: collection_id, update_banner_file_ids: update_banner_file_ids)
           Success(collection_resource)
         end
 
